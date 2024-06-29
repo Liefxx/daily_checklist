@@ -94,10 +94,13 @@
 
             if (savedDate === today && savedChecked) {
                 checkedItems = savedChecked;
-            } else {
-                checkedItems = {};
             }
 
+            renderChecklist();
+            updateProgressBar();
+        }
+
+        function renderChecklist() {
             const checklist = document.getElementById('checklist');
             checklist.innerHTML = '';
 
@@ -117,8 +120,6 @@
                 li.appendChild(label);
                 checklist.appendChild(li);
             });
-
-            updateProgressBar();
         }
 
         function updateProgress(item, isChecked) {
@@ -127,7 +128,8 @@
         }
 
         function updateProgressBar() {
-            const progress = (Object.values(checkedItems).filter(Boolean).length / items.length) * 100;
+            const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+            const progress = (checkedCount / items.length) * 100;
             document.getElementById('progress').style.width = `${progress}%`;
 
             const newUrl = setUrlParams(items, checkedItems);
@@ -136,12 +138,14 @@
 
         function addNewItem() {
             const newItemInput = document.getElementById('newItem');
-            const newItem = newItemInput.newItem.trim();
+            const newItem = newItemInput.value.trim();
 
             if (newItem && !items.includes(newItem)) {
                 items.push(newItem);
+                checkedItems[newItem] = false;
                 newItemInput.value = '';
-                loadChecklist();
+                renderChecklist();
+                updateProgressBar();
             }
         }
 

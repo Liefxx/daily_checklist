@@ -10,6 +10,8 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #2f3437;
+            color: white;
         }
         .checklist {
             list-style-type: none;
@@ -20,7 +22,7 @@
         }
         .progress-bar {
             width: 100%;
-            background-color: #f0f0f0;
+            background-color: #4f5356;
             border-radius: 5px;
             margin-top: 20px;
         }
@@ -33,6 +35,19 @@
         }
         #newItemInput {
             margin-top: 20px;
+        }
+        input[type="text"], button {
+            background-color: #4f5356;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin-right: 5px;
+        }
+        button {
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5f6366;
         }
     </style>
 </head>
@@ -50,6 +65,7 @@
 
     <script>
         let items = ['Clean house', 'Go to gym', 'Read'];
+        let checkedItems = {};
 
         function getUrlParams() {
             const params = new URLSearchParams(window.location.search);
@@ -76,6 +92,12 @@
                 items = savedItems;
             }
 
+            if (savedDate === today && savedChecked) {
+                checkedItems = savedChecked;
+            } else {
+                checkedItems = {};
+            }
+
             const checklist = document.getElementById('checklist');
             checklist.innerHTML = '';
 
@@ -84,8 +106,8 @@
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.id = `item${index}`;
-                checkbox.checked = savedDate === today && savedChecked && savedChecked[item];
-                checkbox.addEventListener('change', updateProgress);
+                checkbox.checked = checkedItems[item] || false;
+                checkbox.addEventListener('change', (e) => updateProgress(item, e.target.checked));
 
                 const label = document.createElement('label');
                 label.htmlFor = `item${index}`;
@@ -96,20 +118,17 @@
                 checklist.appendChild(li);
             });
 
-            updateProgress();
+            updateProgressBar();
         }
 
-        function updateProgress() {
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
-            const progress = (checkedCount / checkboxes.length) * 100;
+        function updateProgress(item, isChecked) {
+            checkedItems[item] = isChecked;
+            updateProgressBar();
+        }
 
+        function updateProgressBar() {
+            const progress = (Object.values(checkedItems).filter(Boolean).length / items.length) * 100;
             document.getElementById('progress').style.width = `${progress}%`;
-
-            const checkedItems = {};
-            checkboxes.forEach((cb, index) => {
-                checkedItems[items[index]] = cb.checked;
-            });
 
             const newUrl = setUrlParams(items, checkedItems);
             document.getElementById('currentUrl').textContent = `Update your Notion embed with this URL: ${newUrl}`;
@@ -117,9 +136,9 @@
 
         function addNewItem() {
             const newItemInput = document.getElementById('newItem');
-            const newItem = newItemInput.value.trim();
+            const newItem = newItemInput.newItem.trim();
 
-            if (newItem) {
+            if (newItem && !items.includes(newItem)) {
                 items.push(newItem);
                 newItemInput.value = '';
                 loadChecklist();

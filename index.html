@@ -72,7 +72,92 @@
     <p id="currentUrl"></p>
 
     <script>
-        // ... (rest of the JavaScript code remains unchanged)
+        let items = ['Clean house', 'Go to gym', 'Read'];
+        let checkedItems = {};
+
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                items: params.get('items') ? JSON.parse(decodeURIComponent(params.get('items'))) : null,
+                checked: params.get('checked') ? JSON.parse(decodeURIComponent(params.get('checked'))) : null,
+                date: params.get('date')
+            };
+        }
+
+        function setUrlParams(items, checked) {
+            const params = new URLSearchParams();
+            params.set('items', encodeURIComponent(JSON.stringify(items)));
+            params.set('checked', encodeURIComponent(JSON.stringify(checked)));
+            params.set('date', new Date().toDateString());
+            return `${window.location.pathname}?${params.toString()}`;
+        }
+
+        function loadChecklist() {
+            const { items: savedItems, checked: savedChecked, date: savedDate } = getUrlParams();
+            const today = new Date().toDateString();
+
+            if (savedItems) {
+                items = savedItems;
+            }
+
+            if (savedDate === today && savedChecked) {
+                checkedItems = savedChecked;
+            }
+
+            renderChecklist();
+            updateProgressBar();
+        }
+
+        function renderChecklist() {
+            const checklist = document.getElementById('checklist');
+            checklist.innerHTML = '';
+
+            items.forEach((item, index) => {
+                const li = document.createElement('li');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `item${index}`;
+                checkbox.checked = checkedItems[item] || false;
+                checkbox.addEventListener('change', (e) => updateProgress(item, e.target.checked));
+
+                const label = document.createElement('label');
+                label.htmlFor = `item${index}`;
+                label.textContent = item;
+
+                li.appendChild(checkbox);
+                li.appendChild(label);
+                checklist.appendChild(li);
+            });
+        }
+
+        function updateProgress(item, isChecked) {
+            checkedItems[item] = isChecked;
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+            const progress = (checkedCount / items.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+
+            const newUrl = setUrlParams(items, checkedItems);
+            document.getElementById('currentUrl').textContent = `Update your Notion embed with this URL: ${newUrl}`;
+        }
+
+        function addNewItem() {
+            const newItemInput = document.getElementById('newItem');
+            const newItem = newItemInput.value.trim();
+
+            if (newItem && !items.includes(newItem)) {
+                items.push(newItem);
+                checkedItems[newItem] = false;
+                newItemInput.value = '';
+                renderChecklist();
+                updateProgressBar();
+            }
+        }
+
+        loadChecklist();
     </script>
 </body>
 </html>
